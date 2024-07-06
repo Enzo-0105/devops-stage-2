@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile 
+    ports:
+      - "80:5173"
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: enzo
+      POSTGRES_PASSWORD: enzotec
+      POSTGRES_DB: enzodb
+    ports:
+      - "80:80"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgres://enzo:enzotec@db:5432/enzodb
+    ports:
+      - "8000:8000"
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+
+
