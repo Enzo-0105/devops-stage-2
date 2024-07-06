@@ -1,4 +1,5 @@
-version: '3.8'
+version: "3.8"
+
 
 services:
   frontend:
@@ -6,16 +7,18 @@ services:
       context: ./frontend
       dockerfile: Dockerfile 
     ports:
-      - "80:5173"
+      - "8081:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
 
   db:
     image: postgres:latest
     environment:
-      POSTGRES_USER: enzo
-      POSTGRES_PASSWORD: enzotec
-      POSTGRES_DB: enzodb
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: changethis123
+      POSTGRES_DB: app
     ports:
-      - "80:80"
+      - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 
@@ -29,10 +32,13 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgres://enzo:enzotec@db:5432/enzodb
+      - DATABASE_URL=postgres://app:changethis123@db:5432/app
+    env_file: ./backend/.env
     ports:
       - "8000:8000"
-
+    depends_on:
+      - db
+    command: ["sh", "-c", "poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"]
   nginx:
     image: nginx:latest
     ports:
@@ -41,4 +47,5 @@ services:
       - frontend
       - backend
 
-
+volumes:
+  db_data:
