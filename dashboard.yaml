@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-dashboard
+  labels:
+    app: user-dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-dashboard
+  template:
+    metadata:
+      labels: 
+        app: user-dashboard
+    spec:
+      containers:
+      - image: enzo674/user_dashboard-frontend:v3
+        name: user-dashboard
+        ports:
+        - containerPort: 80
+        envFrom: 
+        - configMapRef:
+            name: backend-url
+      imagePullSecrets:
+        - name: docker-reg
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-url
+data:
+  VITE_API_URL: "http://user-dashboard-backend-svc"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-dashboard-svc
+spec:
+  selector:
+    app: user-dashboard
+  ports:
+    - port: 80
+      targetPort: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-dashboard-backend
+  labels:
+    app: user-dashboard-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-dashboard-backend 
+  template:
+    metadata:
+      labels: 
+        app: user-dashboard-backend
+    spec:
+      containers:
+      - image: enzo674/user_dashboard-backend
+        name: user-dashboard-backend
+        ports:
+        - containerPort: 8000
+        envFrom: 
+        - configMapRef:
+            name: dbs-cred
+        - secretRef:
+            name: dbs-user-cred
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dbs-cred
+data:
+  BACKEND_CORS_ORIGINS: ""
+  POSTGRES_SERVER: ""
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ""
+---
+apiVersion: v1
+kind: Secret 
+metadata: 
+  name: dbs-user-cred
+data: 
+  POSTGRES_USER: ""
+  POSTGRES_PASSWORD: ""
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-dashboard-backend-svc
+spec:
+  selector:
+    app: user-dashboard-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
